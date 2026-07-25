@@ -4,6 +4,7 @@ export type BottomTabParamList = {
 };
 
 export type RootStackParamList = {
+  SplashScreen:undefined,
   MainTabs: undefined;
   EmployeeDetail: {
     personCode: string;
