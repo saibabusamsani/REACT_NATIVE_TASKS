@@ -1,97 +1,109 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Products Module — README
 
-# Getting Started
+Simple CRUD for `products` using SQLite in React Native (TypeScript).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 1. Folder structure
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```
+src/
+├── database/
+│   ├── connection.ts              # opens/holds the single SQLite instance
+│   ├── migrations/
+│   │   ├── 001_create_tables.ts
+│   │   ├── 003_create_products.ts # creates the products table
+│   │   └── index.ts               # registers + runs migrations in order
+│   └── repositories/
+│       └── product.repository.ts  # all SQL for products lives here
+├── types/
+│   └── product.type.ts            # Product, CreateProductInput, UpdateProductInput
+├── hooks/
+│   └── useProducts.ts             # data + loading/error state for the list screen
+├── navigation/
+│   └── types.ts                   # RootStackParamList
+└── screens/
+    ├── ProductListScreen.tsx      # shows all products
+    └── AddProductScreen.tsx       # form to add a product
 ```
 
-## Step 2: Build and run your app
+**Rule of thumb:** screens never talk to SQLite directly. They only talk to a repository (or a hook that wraps a repository).
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+---
 
-### Android
+## 2. How the connection works
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```
+App starts
+   │
+   ▼
+connection.ts opens the DB (once) ──► returns a single shared `db` instance
+   │
+   ▼
+migrations/index.ts runs any migration whose version > current PRAGMA user_version
+   │
+   ▼
+DB is ready → getDb() can now be called from anywhere
 ```
 
-### iOS
+- `getDb()` always returns the **same** open connection — nothing re-opens the DB per screen.
+- Migrations only run **once per version bump**. If a device is already on version 3, only migration 004+ runs on it.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+---
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## 3. How a repository is used
 
-```sh
-bundle install
+A repository = one file per table. It's the **only** place SQL exists.
+
+```
+Screen / Hook
+   │  calls
+   ▼
+ProductRepository.add(data)
+   │  calls
+   ▼
+getDb()
+   │  runs
+   ▼
+db.execute("INSERT INTO products ...")
+   │
+   ▼
+returns plain typed data (Product, number, boolean) — never raw SQLite rows
 ```
 
-Then, and every time you update your native dependencies, run:
+**Example — adding a product:**
 
-```sh
-bundle exec pod install
+```typescript
+// in a screen or hook
+const id = await ProductRepository.add({ name: 'Mouse', price: 499 });
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+**Example — listing products:**
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```typescript
+const products = await ProductRepository.findAll(); // Product[]
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Why this pattern?
+| Without repository | With repository |
+|---|---|
+| SQL scattered across screens | SQL lives in one place per table |
+| Hard to test | Easy to mock `ProductRepository` in tests |
+| Copy-paste errors in queries | One source of truth |
+| UI knows about SQLite | UI only knows `Product`, `add()`, `findAll()` |
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+---
 
-## Step 3: Modify your app
+## 4. Full flow, start to finish
 
-Now that you have successfully run the app, let's make changes!
+```
+User taps "Save"
+   → AddProductScreen validates input
+   → ProductRepository.add(data)
+   → getDb().execute(INSERT...)
+   → navigation.goBack()
+   → ProductListScreen refetches on focus (useProducts hook)
+   → FlatList re-renders with the new product
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+That's the whole loop: **Screen → Repository → DB → back to Screen.**

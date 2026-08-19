@@ -1,18 +1,25 @@
-import React from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { DrawerParamList } from '../types/navigation';
-import MainTabNavigator from './MainTabNavigator';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import ProductListScreen from '../screens/ProductListScreen';
+import AddProductScreen from '../screens/AddProductScreen';
 
 
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const Drawer = createDrawerNavigator<DrawerParamList>();
-
-const AppNavigator = () => {
+export default function AppNavigator() {
   return (
-    <Drawer.Navigator screenOptions={{ headerShown: false }}>
-      <Drawer.Screen name="HomeTabs" component={MainTabNavigator} />
-    </Drawer.Navigator>
-  );
-};
+      <Stack.Navigator initialRouteName="ProductList">
+        <Stack.Screen
+          name="ProductList"
+          component={ProductListScreen}
+          options={{ title: 'Products' }}
+        />
+        <Stack.Screen
+          name="AddProduct"
+          component={AddProductScreen}
+          options={{ title: 'Add product' }}
+        />
+      </Stack.Navigator>
 
-export default AppNavigator;
+  );
+}
