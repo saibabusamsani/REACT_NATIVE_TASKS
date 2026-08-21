@@ -13,6 +13,7 @@ import {
   Dimensions,
   Platform,
   Easing,
+  Image,
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context"
 
@@ -63,10 +64,20 @@ const DOCUMENTS_LIST = [
   { id: '5', name: 'Bank Passbook Copy', type: 'Bank Document', status: 'Pending', date: '—' },
 ];
 
+// Same local site-photo assets used across the app — drop your real photos
+// into src/assets/ with these exact filenames and they'll show up automatically.
+const STAGE_IMAGES = {
+  foundation: require('../src/assets/foundation.jpg'),
+  plinth: require('../src/assets/plinth.jpg'),
+  roof: require('../src/assets/roof.jpg'),
+  finishing: require('../src/assets/finishing.jpg'),
+  default: require('../src/assets/default.jpg'),
+};
+
 const PHOTOS_LIST = [
-  { stage: 'Foundation', date: '27 Mar 2026', time: '4:02 PM', loc: 'Warangal Rural, Ward 14', verifiedBy: 'AE — S. Naveen Reddy' },
-  { stage: 'Plinth', date: '18 May 2026', time: '11:20 AM', loc: 'Warangal Rural, Ward 14', verifiedBy: 'AE — S. Naveen Reddy' },
-  { stage: 'Roof', date: '14 Aug 2026', time: '3:10 PM', loc: 'Warangal Rural, Ward 14', verifiedBy: 'Pending AE review' },
+  { stage: 'Foundation', date: '27 Mar 2026', time: '4:02 PM', loc: 'Warangal Rural, Ward 14', verifiedBy: 'AE — S. Naveen Reddy', lat: '17.9212', lng: '79.5893', source: STAGE_IMAGES.foundation },
+  { stage: 'Plinth', date: '18 May 2026', time: '11:20 AM', loc: 'Warangal Rural, Ward 14', verifiedBy: 'AE — S. Naveen Reddy', lat: '17.9218', lng: '79.5901', source: STAGE_IMAGES.plinth },
+  { stage: 'Roof', date: '14 Aug 2026', time: '3:10 PM', loc: 'Warangal Rural, Ward 14', verifiedBy: 'Pending AE review', lat: '17.9224', lng: '79.5908', source: STAGE_IMAGES.roof },
 ];
 
 const NOTIFS_LIST = [
@@ -193,7 +204,8 @@ export default function Beneficiary({ navigation }) {
   const [authStep, setAuthStep] = useState('login'); // 'login' | 'otp' | 'vid'
   const [mobileNumber, setMobileNumber] = useState('9876543210');
   const [activeTab, setActiveTab] = useState('home');
-  const [currentSubScreen, setCurrentSubScreen] = useState(null); // 'documents' | 'notifications'
+  const [currentSubScreen, setCurrentSubScreen] = useState(null); // 'documents' | 'notifications' | 'photos'
+  const [fullImage, setFullImage] = useState(null); // holds the tapped photo entry for the full-screen viewer
 
   // Payment State Machine
   const [isPayModalVisible, setPayModalVisible] = useState(false);
@@ -399,18 +411,75 @@ export default function Beneficiary({ navigation }) {
           <Text style={styles.subHeaderTitle}>Site Photos</Text>
         </View>
         <ScrollView style={styles.contentArea}>
-          {PHOTOS_LIST.map((p, idx) => (
-            <View key={idx} style={styles.card}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.cardHeaderTitle}>{p.stage} Stage</Text>
-                <Badge text={p.verifiedBy.startsWith('Pending') ? 'Pending' : 'Verified'} type={p.verifiedBy.startsWith('Pending') ? 'warning' : 'success'} />
-              </View>
-              <Text style={[styles.helperText, { marginTop: 4 }]}>{p.loc}</Text>
-              <Text style={[styles.helperText, { marginTop: 4 }]}>{p.date} • {p.time}</Text>
-              <Text style={[styles.helperText, { marginTop: 8, color: COLORS.navyAccent, fontWeight: '600' }]}>{p.verifiedBy}</Text>
-            </View>
-          ))}
+          {PHOTOS_LIST.map((p, idx) => {
+            const verified = !p.verifiedBy.startsWith('Pending');
+            if (!verified) {
+              return (
+                <View key={idx} style={styles.photoCard}>
+                  <View style={styles.photoPendingWrap}>
+                    <Text style={{ fontSize: 22 }}>⏳</Text>
+                    <Text style={styles.photoPendingText}>Photo pending AE verification</Text>
+                  </View>
+                  <View style={styles.photoCardBody}>
+                    <View style={styles.rowBetween}>
+                      <Text style={styles.cardHeaderTitle}>{p.stage} Stage</Text>
+                      <Badge text="Pending" type="warning" />
+                    </View>
+                    <Text style={[styles.helperText, { marginTop: 4 }]}>{p.loc}</Text>
+                    <Text style={[styles.helperText, { marginTop: 4 }]}>{p.date} • {p.time}</Text>
+                    <Text style={[styles.helperText, { marginTop: 6, color: COLORS.navyAccent, fontWeight: '600' }]}>{p.verifiedBy}</Text>
+                  </View>
+                </View>
+              );
+            }
+            return (
+              <TouchableOpacity key={idx} style={styles.photoCard} activeOpacity={0.9} onPress={() => setFullImage(p)}>
+                <View style={styles.photoThumbWrap}>
+                  <Image source={p.source} style={styles.photoThumb} resizeMode="cover" />
+                  <View style={styles.photoGeoOverlay}>
+                    <View style={styles.photoPinRow}>
+                      <Text style={styles.photoPinIcon}>📍</Text>
+                      <Text style={styles.photoPinText}>{p.lat}° N, {p.lng}° E</Text>
+                    </View>
+                    <Text style={styles.photoOverlaySub}>{p.loc} · {p.date} · {p.time}</Text>
+                  </View>
+                  <View style={styles.photoExpandHint}>
+                    <Text style={{ color: '#fff', fontSize: 12 }}>⤢</Text>
+                  </View>
+                </View>
+                <View style={styles.photoCardBody}>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.cardHeaderTitle}>{p.stage} Stage</Text>
+                    <Badge text="Verified" type="success" />
+                  </View>
+                  <Text style={[styles.helperText, { marginTop: 6, color: COLORS.navyAccent, fontWeight: '600' }]}>{p.verifiedBy}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
+
+        {/* FULL-SCREEN GEOTAGGED IMAGE VIEWER */}
+        <Modal visible={!!fullImage} animationType="fade" transparent onRequestClose={() => setFullImage(null)}>
+          <View style={styles.fullImageOverlay}>
+            <TouchableOpacity style={styles.fullImageCloseBtn} onPress={() => setFullImage(null)}>
+              <Text style={{ color: '#fff', fontSize: 20 }}>✕</Text>
+            </TouchableOpacity>
+            {fullImage && (
+              <>
+                <Image source={fullImage.source} style={styles.fullImage} resizeMode="contain" />
+                <View style={styles.fullImageCaption}>
+                  <View style={styles.photoPinRow}>
+                    <Text style={styles.photoPinIcon}>📍</Text>
+                    <Text style={styles.fullImageCaptionText}>{fullImage.lat}° N, {fullImage.lng}° E</Text>
+                  </View>
+                  <Text style={styles.fullImageCaptionSub}>{fullImage.stage} Stage · {fullImage.loc}</Text>
+                  <Text style={styles.fullImageCaptionSub}>{fullImage.date} · {fullImage.time}</Text>
+                </View>
+              </>
+            )}
+          </View>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -798,4 +867,24 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   monoValue: { fontSize: 14, fontWeight: '700', color: COLORS.navyDark },
   divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 12 },
+
+  photoCard: { borderRadius: 16, overflow: 'hidden', marginBottom: 14, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  photoThumbWrap: { width: '100%', height: 170, position: 'relative', backgroundColor: '#0b1220' },
+  photoThumb: { width: '100%', height: '100%' },
+  photoGeoOverlay: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 10, backgroundColor: 'rgba(10,19,34,0.55)' },
+  photoPinRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  photoPinIcon: { fontSize: 11 },
+  photoPinText: { color: '#fff', fontSize: 11.5, fontWeight: '700' },
+  photoOverlaySub: { color: '#D9E2F1', fontSize: 10.5, marginTop: 3 },
+  photoExpandHint: { position: 'absolute', top: 10, right: 10, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
+  photoCardBody: { padding: 14 },
+  photoPendingWrap: { height: 100, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F4F8', gap: 6 },
+  photoPendingText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
+
+  fullImageOverlay: { flex: 1, backgroundColor: 'rgba(4,8,16,0.96)', justifyContent: 'center', alignItems: 'center' },
+  fullImageCloseBtn: { position: 'absolute', top: 50, right: 20, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
+  fullImage: { width: '100%', height: '65%' },
+  fullImageCaption: { position: 'absolute', bottom: 60, left: 24, right: 24, alignItems: 'center' },
+  fullImageCaptionText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  fullImageCaptionSub: { color: '#D9E2F1', fontSize: 12, marginTop: 5, textAlign: 'center' },
 });
