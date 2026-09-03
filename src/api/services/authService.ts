@@ -1,20 +1,12 @@
+
+import { request } from '../request';
+import { ENDPOINTS } from '../endpoints';
 import { LoginPayload, LoginResponse } from '../../types/auth.type';
-import apiService from '../AxiosClient';
-import { ENDPOINTS } from '../Endpoints';
 
 export const authService = {
+  login: (payload: LoginPayload) =>
+    request<LoginResponse>({ method: 'POST', url: ENDPOINTS.AUTH.LOGIN, data: payload }),
 
-  login: async (payload: LoginPayload,): Promise<LoginResponse> => {
-
-    const response = await apiService.post<LoginResponse>(
-      ENDPOINTS.AUTH.LOGIN,
-      payload,
-    );
-
-    return response.data;
-  },
-
-  logout: async (): Promise<void> => {
-    await apiService.post(ENDPOINTS.AUTH.LOGOUT);
-  }
+  logout: () =>
+    request<void>({ method: 'POST', url: ENDPOINTS.AUTH.LOGOUT }),
 };

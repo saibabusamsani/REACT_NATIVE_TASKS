@@ -4,7 +4,7 @@ import { typography } from './Typography';
 import { spacing, iconSize } from './spacing';
 import { radius } from './radius';
 import { colors, darkColors, gradients, darkGradients, GradientKey } from './colors';
-import { shadow } from './shadow';                                        
+import { shadow } from './shadow';
 import { scaleRecord, getScaleFns } from './scaling';
 import { tabletSpacing, tabletRadius, tabletIconSize } from './tabletTokens';
 
@@ -19,7 +19,7 @@ interface ThemeContextValue {
   spacing: Record<keyof typeof spacing, number>;
   radius: Record<keyof typeof radius, number>;
   iconSize: Record<keyof typeof iconSize, number>;
-  shadow: typeof shadow;                                                 
+  shadow: typeof shadow;
   rawSpacing: typeof spacing;
   rawRadius: typeof radius;
   rawIconSize: typeof iconSize;
@@ -52,7 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       spacing: isTablet ? tabletSpacing : scaleRecord(spacing, moderateScale),
       radius: isTablet ? tabletRadius : scaleRecord(radius, moderateScale),
       iconSize: isTablet ? tabletIconSize : scaleRecord(iconSize, moderateScale),
-      shadow,                                                            
+      shadow,
       rawSpacing: spacing,
       rawRadius: radius,
       rawIconSize: iconSize,

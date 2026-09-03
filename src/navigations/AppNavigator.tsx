@@ -4,7 +4,8 @@ import SplashScreen from "../screens/SpalshScreen"
 
 import MainTabNavigator from './MainTabNavigator';
 import AuthNavigator from './AuthNavigator';
-import { useAuth } from '../hooks/Useauth';
+import { useAuth } from '../hooks/useAuth';
+
 
 export default function AppNavigator() {
   const { isLoggedIn } = useAuth();
@@ -13,7 +14,7 @@ export default function AppNavigator() {
     return <SplashScreen/>;
   }
 
-  return isLoggedIn ? <MainTabNavigator /> : <AuthNavigator />
+  return 1 ? <MainTabNavigator /> : <AuthNavigator />
 
 
 }
