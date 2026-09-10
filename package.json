@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "bootsplash:android": "react-native-bootsplash generate src/assets/logo.png  --logo-width=100 --platforms=android --assets-output=assets/bootsplash"
+    "bootsplash:android": "react-native-bootsplash generate src/assets/logo.png  --logo-width=160  --background=#1B3A6B --platforms=android --assets-output=assets/bootsplash"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^3.1.1",

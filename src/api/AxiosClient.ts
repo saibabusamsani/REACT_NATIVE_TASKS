@@ -1,11 +1,11 @@
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
-import { API_TIMEOUT, MAIN_URL } from '../constants/AppConfig';
+import { API_TIMEOUT, BASE_URL, MOBILE_PREFIX, AUTH_KEYWORD } from '../constants/AppConfig';
 import { store } from '../store';
 import { parseApiError } from './ErrorHandler';
 
 const apiService = axios.create({
-  baseURL: `${MAIN_URL}/mobile`,
+  baseURL: BASE_URL,
   timeout: API_TIMEOUT,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -13,6 +13,11 @@ const apiService = axios.create({
 apiService.interceptors.request.use((config) => {
   // const token = store.getState().authentication.user?.accessToken;
   // if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  if (config.url && !config.url.includes(AUTH_KEYWORD)) {
+    config.url = `${config.url}${MOBILE_PREFIX}`;
+  }
+
   config.headers.kioskId = 'KSK1';
   return config;
 });

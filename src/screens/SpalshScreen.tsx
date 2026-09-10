@@ -1,97 +1,172 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Animated, Dimensions, Easing } from 'react-native';
-
-const { height } = Dimensions.get('window');
+import { View, Animated, Easing, StyleSheet } from 'react-native';
+import { useTheme, useThemedStyles, AppTheme } from '../theme';
+import { AppText } from '../components/AppText';
 
 const SplashScreen = () => {
-  const logoTranslateY = useRef(new Animated.Value(0)).current;
+  const { isLandscape } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
+  // Initialized at 1 to seamlessly match the size and opacity of native BootSplash
   const logoScale = useRef(new Animated.Value(1)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const textScale = useRef(new Animated.Value(0.2)).current;
+  const logoOpacity = useRef(new Animated.Value(1)).current;
+  const contentFade = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, iconSizeValue * 4.5],
+  });
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(logoScale, {
-        toValue: 0.5,
-        duration: 800,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(logoTranslateY, {
-        toValue: height * 0.15,
-        duration: 800,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
+    progressAnim.setValue(0);
+
+    // Fade in title, subtitle, and progress bar smoothly
+    Animated.timing(contentFade, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+
+    // Progress bar looping animation
+    const progressLoop = Animated.loop(
       Animated.sequence([
-        Animated.delay(250),
-        Animated.parallel([
-          Animated.timing(textOpacity, {
-            toValue: 1,
-            duration: 500,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.spring(textScale, {
-            toValue: 1,
-            friction: 4,
-            tension: 60,
-            useNativeDriver: true,
-          }),
-        ]),
+        Animated.timing(progressAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        }),
+        Animated.timing(progressAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: false,
+        }),
       ]),
-    ]).start();
-  }, []);
+    );
+
+    progressLoop.start();
+
+    return () => {
+      progressLoop.stop();
+      progressAnim.stopAnimation();
+    };
+  }, [contentFade, progressAnim]);
 
   return (
-    <Animated.View style={styles.container}>
-      <Animated.Image
-        source={require('../assets/logo.png')}
+    <View style={styles.container}>
+      <View
         style={[
-          styles.logo,
+          styles.mainContent,
           {
-            transform: [
-              { translateY: logoTranslateY },
-              { scale: logoScale },
-            ],
-          },
-        ]}
-        resizeMode="contain"
-      />
-
-      <Animated.Text
-        style={[
-          styles.text,
-          {
-            opacity: textOpacity,
-            transform: [{ scale: textScale }],
+            flexDirection: isLandscape ? 'row' : 'column',
           },
         ]}
       >
-        REACT NATIVE
-      </Animated.Text>
-    </Animated.View>
+        <Animated.View
+          style={[
+            styles.logoCard,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            },
+          ]}
+        >
+          <Animated.Image
+            source={require('../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.textContainer,
+            {
+              opacity: contentFade,
+            },
+          ]}
+        >
+          <AppText variant="h2" style={styles.titleText}>
+            Telangana Housing Corporation Limited
+          </AppText>
+
+          <AppText variant="caption" style={styles.subtitleText}>
+            Contractor & Field Monitoring App
+          </AppText>
+
+          <View style={styles.progressTrack}>
+            <Animated.View
+              style={[
+                styles.progressBar,
+                {
+                  width: progressWidth,
+                },
+              ]}
+            />
+          </View>
+        </Animated.View>
+      </View>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#111E38',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 160,
-    height: 160,
-    marginBottom: 40,
-  },
-  text: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
-});
-
 export default SplashScreen;
+
+const iconSizeValue = 40 * 2.5;
+
+const createStyles = ({ spacing, colors, radius, shadow, iconSize }: AppTheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mainContent: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    logoCard: {
+      width: 160,
+      height: 160,
+      backgroundColor: colors.surface,
+      borderRadius: radius.full, // Matches circular shape of the TGHCL emblem
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.xs,
+      marginBottom: spacing.xl,
+      ...shadow.lg,
+    },
+    logoImage: {
+      width: '100%',
+      height: '100%',
+    },
+    textContainer: {
+      alignItems: 'center',
+    },
+    titleText: {
+      color: colors.surface,
+      textAlign: 'center',
+      marginBottom: spacing.xs,
+    },
+    subtitleText: {
+      color: 'rgba(255, 255, 255, 0.8)',
+      textAlign: 'center',
+      marginBottom: spacing.xxl,
+    },
+    progressTrack: {
+      width: iconSize.xl * 4.5,
+      height: spacing.xs,
+      backgroundColor: 'rgba(236, 202, 202, 0.25)',
+      borderRadius: radius.full,
+      overflow: 'hidden',
+    },
+    progressBar: {
+      height: '100%',
+      backgroundColor: colors.accent,
+      borderRadius: radius.full,
+    },
+  });
