@@ -10,11 +10,11 @@ import { useAuth } from '../hooks/useAuth';
 export default function AppNavigator() {
   const { isLoggedIn } = useAuth();
 
-  if (isLoggedIn === null ) {
+  if (isLoggedIn === null) {
     return <SplashScreen/>;
   }
 
-  return 1 ? <MainTabNavigator /> : <AuthNavigator />
+  return isLoggedIn? <MainTabNavigator /> : <AuthNavigator />
 
 
 }

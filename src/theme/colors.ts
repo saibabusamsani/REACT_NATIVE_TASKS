@@ -1,6 +1,6 @@
 export const colors = {
-  primary: '#4A90E2',
-  primaryDark: '#357ABD',
+  primary: '#1B3A6B',
+  primaryDark: '#12294D',
   secondary: '#6B6B6B',
 
   background: '#FFFFFF',
@@ -16,14 +16,16 @@ export const colors = {
   error: '#E53935',
   warning: '#FB8C00',
 
+  accent: '#C9982E',
+
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
 } as const;
 
 export const darkColors: Record<keyof typeof colors, string> = {
-  primary: '#5B9EE8',
-  primaryDark: '#4A90E2',
+  primary: '#2E5490',
+  primaryDark: '#1B3A6B',
   secondary: '#9B9B9B',
 
   background: '#121212',
@@ -39,19 +41,21 @@ export const darkColors: Record<keyof typeof colors, string> = {
   error: '#EF5350',
   warning: '#FFA726',
 
+  accent: '#D9AE55',
+
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
 };
 
 export const gradients = {
-  primary: ['#4A90E2', '#357ABD'],
+  primary: ['#1B3A6B', '#12294D'],
   success: ['#66BB6A', '#43A047'],
   error: ['#EF5350', '#E53935'],
 } as const;
 
 export const darkGradients: Record<keyof typeof gradients, readonly string[]> = {
-  primary: ['#5B9EE8', '#4A90E2'],
+  primary: ['#2E5490', '#1B3A6B'],
   success: ['#81C784', '#66BB6A'],
   error: ['#FF8A80', '#EF5350'],
 };

@@ -4,17 +4,11 @@ export interface LoginPayload {
 }
 
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-}
 
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: User;
-}
+  employeeName:string,
+  mobileNumber:string,
+  employeeId:string,
+  designationId:number,
+  status:number
 
-export interface RefreshTokenResponse {
-  accessToken: string;
 }

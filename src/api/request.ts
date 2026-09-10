@@ -4,6 +4,6 @@ import {ApiResponse } from '../types/types';
 
 export async function request<T>(config: AxiosRequestConfig): Promise<T> {
   
-    const { data } = await apiService.request<ApiResponse<T>>(config);
-    return data.response;
+    const response = await apiService.request(config);
+    return response.data;
 }
